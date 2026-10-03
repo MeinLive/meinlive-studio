@@ -12,6 +12,10 @@
 !/plugins
 !/shared
 !/test
+# MeinLive Studio
+!/meinlive
+!README.md
+!README-OBS.rst
 !.cirrus.xml
 !.clang-format
 !.editorconfig
