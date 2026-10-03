@@ -1,0 +1,62 @@
+@OBSThemeMeta {
+    name: 'MeinLive';
+    id: 'de.meinlive.Studio';
+    extends: 'com.obsproject.Yami';
+    author: 'MeinLive';
+    dark: 'true';
+}
+
+/* Farben wie meinlive.de (public/assets/css/main.css) */
+@OBSThemeVars {
+    /* Akzent: alle blauen Töne von Yami werden zu MeinLive-Pink */
+    --blue1: #FF6A85;
+    --blue2: #FF2D55;
+    --blue3: #E11D48;
+    --blue4: #C01640;
+    --blue5: #8F1131;
+    --blue6: #4A0B1B;
+
+    /* Flächen: --color-bg, --color-bg-alt, --color-surface ... --color-border-strong */
+    --grey1: #5C5B66;
+    --grey2: #4A4953;
+    --grey3: #3C3B44;
+    --grey4: #29282F;
+    --grey5: #201F25;
+    --grey6: #18181C;
+    --grey7: #131316;
+    --grey8: #0C0C0E;
+
+    --white1: #F4F4F6;
+    --white5: #918F99;
+
+    --primary: #E11D48;
+    --primary_light: #FF2D55;
+    --primary_lighter: #FF6A85;
+    --primary_dark: #C01640;
+    --primary_darker: #8F1131;
+
+    --warning: #F5A524;
+    --danger: #FF5468;
+
+    --text_muted: #B1B0BA;
+
+    --palette_link: #FF6A3D;
+    --palette_linkVisited: #FF6A3D;
+}
+
+/* "Streaming starten" im Marken-Verlauf wie die Knöpfe auf meinlive.de (--gradient-button) */
+#streamButton {
+    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #E11D48, stop: 1 #EA4A25);
+    border-color: #E11D48;
+    font-weight: bold;
+}
+
+#streamButton:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #FF2D55, stop: 1 #FF6A3D);
+    border-color: #FF2D55;
+}
+
+/* Während der Sendung: kräftiges Live-Rot */
+#streamButton:!hover:!pressed.state-active {
+    background: #FF2D55;
+}

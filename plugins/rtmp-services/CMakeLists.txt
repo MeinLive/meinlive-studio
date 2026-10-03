@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.28...3.30)
 
-option(ENABLE_SERVICE_UPDATES "Checks for service updates" ON)
+# MeinLive Studio: aus, sonst ersetzt die OBS-Liste vom Server unseren MeinLive-Eintrag
+option(ENABLE_SERVICE_UPDATES "Checks for service updates" OFF)
 
 set(
   RTMP_SERVICES_URL

@@ -3,6 +3,28 @@
     "format_version": 5,
     "services": [
         {
+            "name": "MeinLive",
+            "common": true,
+            "stream_key_link": "https://meinlive.de/go-live#obs",
+            "supported video codecs": [
+                "h264"
+            ],
+            "supported audio codecs": [
+                "aac"
+            ],
+            "servers": [
+                {
+                    "name": "Deutschland",
+                    "url": "rtmp://stream.meinlive.de:1935/live"
+                }
+            ],
+            "recommended": {
+                "keyint": 2,
+                "max video bitrate": 6000,
+                "max audio bitrate": 160
+            }
+        },
+        {
             "name": "Twitch",
             "common": true,
             "stream_key_link": "https://dashboard.twitch.tv/settings/stream",

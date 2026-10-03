@@ -20,6 +20,7 @@
 #include "OBSBasic.hpp"
 
 #include <dialogs/OBSWhatsNew.hpp>
+#include <meinlive/MeinLive.hpp>
 
 #ifdef _WIN32
 #include <utility/AutoUpdateThread.hpp>
@@ -38,9 +39,6 @@
 #endif
 #include <qt-wrappers.hpp>
 
-#ifdef _WIN32
-#define UPDATE_CHECK_INTERVAL (60 * 60 * 24 * 4) /* 4 days */
-#endif
 
 struct QCef;
 struct QCefCookieManager;
@@ -183,34 +181,16 @@ void OBSBasic::TimedCheckForUpdates()
 #if defined(ENABLE_SPARKLE_UPDATER)
 	CheckForUpdates(false);
 #elif _WIN32
-	long long lastUpdate = config_get_int(App()->GetAppConfig(), "General", "LastUpdateCheck");
-	uint32_t lastVersion = config_get_int(App()->GetAppConfig(), "General", "LastVersion");
-
-	if (lastVersion < LIBOBS_API_VER) {
-		lastUpdate = 0;
-		config_set_int(App()->GetAppConfig(), "General", "LastUpdateCheck", 0);
-	}
-
-	long long t = (long long)time(nullptr);
-	long long secs = t - lastUpdate;
-
-	if (secs > UPDATE_CHECK_INTERVAL) {
-		CheckForUpdates(false);
-	}
+	/* MeinLive Studio: bei jedem Start wie die Android-App ("Später" pausiert 3 Tage) */
+	MeinLive::CheckForUpdates(false);
 #endif
 }
 
 void OBSBasic::CheckForUpdates(bool manualUpdate)
 {
 #if _WIN32
-	ui->actionCheckForUpdates->setEnabled(false);
-	ui->actionRepair->setEnabled(false);
-
-	if (updateCheckThread && updateCheckThread->isRunning()) {
-		return;
-	}
-	updateCheckThread.reset(new AutoUpdateThread(manualUpdate));
-	updateCheckThread->start();
+	/* MeinLive Studio: eigene Updates von meinlive.de statt obsproject.com */
+	MeinLive::CheckForUpdates(manualUpdate);
 #elif defined(ENABLE_SPARKLE_UPDATER)
 	ui->actionCheckForUpdates->setEnabled(false);
 

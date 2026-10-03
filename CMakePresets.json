@@ -167,7 +167,7 @@
       "generator": "Visual Studio 18 2026",
       "cacheVariables": {
         "GPU_PRIORITY_VAL": {"type": "STRING", "value": "$penv{GPU_PRIORITY_VAL}"},
-        "VIRTUALCAM_GUID": {"type": "STRING", "value": "A3FCE0F5-3493-419F-958A-ABA1250EC20B"},
+        "VIRTUALCAM_GUID": {"type": "STRING", "value": "CD4C4EA3-9B77-4783-867E-6102F0B542FF"},
         "ENABLE_BROWSER": true
       }
     },
@@ -196,7 +196,7 @@
       "generator": "Visual Studio 18 2026",
       "cacheVariables": {
         "GPU_PRIORITY_VAL": {"type": "STRING", "value": "$penv{GPU_PRIORITY_VAL}"},
-        "VIRTUALCAM_GUID": {"type": "STRING", "value": "A3FCE0F5-3493-419F-958A-ABA1250EC20B"},
+        "VIRTUALCAM_GUID": {"type": "STRING", "value": "CD4C4EA3-9B77-4783-867E-6102F0B542FF"},
         "ENABLE_AJA": false,
         "ENABLE_BROWSER": true,
         "ENABLE_SCRIPTING": false,

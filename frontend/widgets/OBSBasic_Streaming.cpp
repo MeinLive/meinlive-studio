@@ -22,6 +22,7 @@
 #include <components/UIValidation.hpp>
 #ifdef YOUTUBE_ENABLED
 #include <docks/YouTubeAppDock.hpp>
+#include <meinlive/MeinLive.hpp>
 #include <utility/YoutubeApiWrappers.hpp>
 #endif
 
@@ -51,6 +52,11 @@ void OBSBasic::StartStreaming()
 		return;
 	}
 	if (disableOutputsRef) {
+		return;
+	}
+
+	/* MeinLive Studio: Titel/Kategorie abfragen und frischen Stream-Key holen */
+	if (!MeinLive::PrepareStreamStart(this)) {
 		return;
 	}
 
@@ -424,7 +430,9 @@ void OBSBasic::StreamActionTriggered()
 
 		Auth *auth = GetAuth();
 
-		auto action = (auth && auth->external()) ? StreamSettingsAction::ContinueStream
+		/* MeinLive Studio: angemeldet holt MeinLive Studio den Stream-Key selbst */
+		auto action = ((auth && auth->external()) || MeinLive::ProvidesStreamKey())
+				      ? StreamSettingsAction::ContinueStream
 							 : UIValidation::StreamSettingsConfirmation(this, service);
 		switch (action) {
 		case StreamSettingsAction::ContinueStream:

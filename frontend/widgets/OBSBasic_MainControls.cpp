@@ -313,7 +313,7 @@ void OBSBasic::UploadLog(const char *subdir, const char *file, const LogUploadTy
 void OBSBasic::on_actionShowLogs_triggered()
 {
 	char logDir[512];
-	if (GetAppConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0) {
+	if (GetAppConfigPath(logDir, sizeof(logDir), "meinlive-studio/logs") <= 0) {
 		return;
 	}
 
@@ -419,19 +419,19 @@ void OBSBasic::logUploadFinished(const std::string &text, const std::string &err
 
 void OBSBasic::on_actionHelpPortal_triggered()
 {
-	QUrl url = QUrl("https://obsproject.com/help", QUrl::TolerantMode);
+	QUrl url = QUrl("https://meinlive.de/hilfe", QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 }
 
 void OBSBasic::on_actionWebsite_triggered()
 {
-	QUrl url = QUrl("https://obsproject.com", QUrl::TolerantMode);
+	QUrl url = QUrl("https://meinlive.de", QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 }
 
 void OBSBasic::on_actionDiscord_triggered()
 {
-	QUrl url = QUrl("https://obsproject.com/discord", QUrl::TolerantMode);
+	QUrl url = QUrl("https://meinlive.de/support", QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 }
 
@@ -464,7 +464,7 @@ void OBSBasic::on_actionReleaseNotes_triggered()
 
 void OBSBasic::on_actionShowSettingsFolder_triggered()
 {
-	const std::string userConfigPath = App()->userConfigLocation.u8string() + "/obs-studio";
+	const std::string userConfigPath = App()->userConfigLocation.u8string() + "/meinlive-studio";
 	const QString userConfigLocation = QString::fromStdString(userConfigPath);
 
 	QDesktopServices::openUrl(QUrl::fromLocalFile(userConfigLocation));

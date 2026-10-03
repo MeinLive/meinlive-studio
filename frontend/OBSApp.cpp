@@ -409,21 +409,21 @@ static bool MakeUserDirs()
 {
 	char path[512];
 
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/basic") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/basic") <= 0) {
 		return false;
 	}
 	if (!do_mkdir(path)) {
 		return false;
 	}
 
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/logs") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/logs") <= 0) {
 		return false;
 	}
 	if (!do_mkdir(path)) {
 		return false;
 	}
 
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/profiler_data") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/profiler_data") <= 0) {
 		return false;
 	}
 	if (!do_mkdir(path)) {
@@ -431,7 +431,7 @@ static bool MakeUserDirs()
 	}
 
 #ifdef _WIN32
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/crashes") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/crashes") <= 0) {
 		return false;
 	}
 	if (!do_mkdir(path)) {
@@ -439,14 +439,14 @@ static bool MakeUserDirs()
 	}
 #endif
 
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/updates") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/updates") <= 0) {
 		return false;
 	}
 	if (!do_mkdir(path)) {
 		return false;
 	}
 
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/plugin_config") <= 0) {
 		return false;
 	}
 	if (!do_mkdir(path)) {
@@ -456,9 +456,9 @@ static bool MakeUserDirs()
 	return true;
 }
 
-constexpr std::string_view OBSProfileSubDirectory = "obs-studio/basic/profiles";
-constexpr std::string_view OBSScenesSubDirectory = "obs-studio/basic/scenes";
-constexpr std::string_view OBSPluginManagerSubDirectory = "obs-studio/plugin_manager";
+constexpr std::string_view OBSProfileSubDirectory = "meinlive-studio/basic/profiles";
+constexpr std::string_view OBSScenesSubDirectory = "meinlive-studio/basic/scenes";
+constexpr std::string_view OBSPluginManagerSubDirectory = "meinlive-studio/plugin_manager";
 
 static bool MakeUserProfileDirs()
 {
@@ -539,7 +539,7 @@ bool OBSApp::InitGlobalConfig()
 {
 	char path[512];
 
-	int len = GetAppConfigPath(path, sizeof(path), "obs-studio/global.ini");
+	int len = GetAppConfigPath(path, sizeof(path), "meinlive-studio/global.ini");
 	if (len <= 0) {
 		return false;
 	}
@@ -611,7 +611,7 @@ bool OBSApp::InitGlobalConfig()
 
 bool OBSApp::InitUserConfig(std::filesystem::path &userConfigLocation, uint32_t lastVersion)
 {
-	const std::string userConfigFile = userConfigLocation.u8string() + "/obs-studio/user.ini";
+	const std::string userConfigFile = userConfigLocation.u8string() + "/meinlive-studio/user.ini";
 
 	int errorCode = userConfig.Open(userConfigFile.c_str(), CONFIG_OPEN_ALWAYS);
 
@@ -671,8 +671,8 @@ void OBSApp::MigrateLegacySettings(const uint32_t lastVersion)
 	}
 }
 
-static constexpr string_view OBSGlobalIniPath = "/obs-studio/global.ini";
-static constexpr string_view OBSUserIniPath = "/obs-studio/user.ini";
+static constexpr string_view OBSGlobalIniPath = "/meinlive-studio/global.ini";
+static constexpr string_view OBSUserIniPath = "/meinlive-studio/user.ini";
 
 bool OBSApp::MigrateGlobalSettings()
 {
@@ -834,7 +834,7 @@ bool LoadBranchesFile(vector<UpdateBranch> &out)
 	string error;
 	string branchesText;
 
-	BPtr<char> branchesFilePath = GetAppConfigPathPtr("obs-studio/updates/branches.json");
+	BPtr<char> branchesFilePath = GetAppConfigPathPtr("meinlive-studio/updates/branches.json");
 
 	QFile branchesFile(branchesFilePath.Get());
 	if (!branchesFile.open(QIODevice::ReadOnly)) {
@@ -972,7 +972,7 @@ static void move_basic_to_profiles(void)
 {
 	char path[512];
 
-	if (GetAppConfigPath(path, 512, "obs-studio/basic") <= 0) {
+	if (GetAppConfigPath(path, 512, "meinlive-studio/basic") <= 0) {
 		return;
 	}
 
@@ -983,7 +983,7 @@ static void move_basic_to_profiles(void)
 	}
 
 	const std::filesystem::path profilesPath =
-		App()->userProfilesLocation / std::filesystem::u8path("obs-studio/basic/profiles");
+		App()->userProfilesLocation / std::filesystem::u8path("meinlive-studio/basic/profiles");
 
 	if (std::filesystem::exists(profilesPath)) {
 		return;
@@ -1036,7 +1036,7 @@ static void move_basic_to_scene_collections(void)
 {
 	char path[512];
 
-	if (GetAppConfigPath(path, 512, "obs-studio/basic") <= 0) {
+	if (GetAppConfigPath(path, 512, "meinlive-studio/basic") <= 0) {
 		return;
 	}
 
@@ -1047,7 +1047,7 @@ static void move_basic_to_scene_collections(void)
 	}
 
 	const std::filesystem::path sceneCollectionPath =
-		App()->userScenesLocation / std::filesystem::u8path("obs-studio/basic/scenes");
+		App()->userScenesLocation / std::filesystem::u8path("meinlive-studio/basic/scenes");
 
 	if (std::filesystem::exists(sceneCollectionPath)) {
 		return;
@@ -1139,10 +1139,10 @@ void OBSApp::AppInit()
 void OBSApp::checkForUncleanShutdown()
 {
 	bool hasUncleanShutdown = crashHandler_->hasUncleanShutdown();
-	bool hasNewCrashLog = crashHandler_->hasNewCrashLog();
 
 	if (hasUncleanShutdown) {
-		UncleanLaunchAction launchAction = handleUncleanShutdown(hasNewCrashLog);
+		/* MeinLive Studio: keine Absturzberichte an obsproject.com */
+		UncleanLaunchAction launchAction = handleUncleanShutdown(false);
 
 		safe_mode = launchAction.useSafeMode;
 
@@ -1171,7 +1171,7 @@ static bool StartupOBS(const char *locale, profiler_name_store_t *store)
 {
 	char path[512];
 
-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0) {
+	if (GetAppConfigPath(path, sizeof(path), "meinlive-studio/plugin_config") <= 0) {
 		return false;
 	}
 
@@ -1421,14 +1421,14 @@ void OBSApp::uploadLastAppLog() const
 {
 	OBSBasic *basicWindow = static_cast<OBSBasic *>(GetMainWindow());
 
-	basicWindow->UploadLog("obs-studio/logs", GetLastLog(), OBS::LogFileType::LastAppLog);
+	basicWindow->UploadLog("meinlive-studio/logs", GetLastLog(), OBS::LogFileType::LastAppLog);
 }
 
 void OBSApp::uploadCurrentAppLog() const
 {
 	OBSBasic *basicWindow = static_cast<OBSBasic *>(GetMainWindow());
 
-	basicWindow->UploadLog("obs-studio/logs", GetCurrentLog(), OBS::LogFileType::CurrentAppLog);
+	basicWindow->UploadLog("meinlive-studio/logs", GetCurrentLog(), OBS::LogFileType::CurrentAppLog);
 }
 
 void OBSApp::uploadLastCrashLog()

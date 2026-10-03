@@ -76,7 +76,7 @@
        <item>
         <widget class="QLabel" name="name">
          <property name="text">
-          <string notr="true">OBS Studio</string>
+          <string notr="true">MeinLive Studio</string>
          </property>
         </widget>
        </item>
@@ -106,7 +106,7 @@
        <item>
         <widget class="QLabel" name="info">
          <property name="text">
-          <string>About.Info</string>
+          <string>MeinLive.About.Info</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

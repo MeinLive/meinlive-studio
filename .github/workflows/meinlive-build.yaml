@@ -1,0 +1,113 @@
+# MeinLive Studio - Windows-Build, Installer und Veröffentlichung
+#
+#  - Jeder Push auf "meinlive" und jeder Pull Request: bauen + Installer als Artefakt
+#  - Tag "v1.2.3" (von meinlive-tools/publish-studio.ps1 gesetzt): zusätzlich GitHub-Release
+#    mit Installer und SHA-256. Der Download für Nutzer läuft direkt über GitHub,
+#    meinlive.de liefert nur studio-latest.json (Version, Neuerungen, Link, Prüfsumme).
+name: MeinLive Studio
+
+on:
+  push:
+    branches: [meinlive]
+    tags: ['v*']
+  pull_request:
+    branches: [meinlive]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-2025-vs2026
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: OBS-Tags holen (für die OBS-Versionsnummer)
+        run: |
+          git remote add upstream https://github.com/obsproject/obs-studio.git
+          git fetch upstream --tags --no-recurse-submodules -q 2>$null
+          git describe --tags --match "[0-9]*"
+
+      - name: Version lesen
+        id: version
+        run: |
+          $cmake = Get-Content meinlive/studio-version.cmake -Raw
+          $name = [regex]::Match($cmake, 'MEINLIVE_STUDIO_VERSION "([^"]+)"').Groups[1].Value
+          $code = [regex]::Match($cmake, 'MEINLIVE_STUDIO_VERSION_CODE (\d+)').Groups[1].Value
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $tag = $env:GITHUB_REF_NAME.Substring(1)
+            if ($tag -ne $name) { throw "Tag v$tag passt nicht zu MEINLIVE_STUDIO_VERSION $name" }
+          }
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "code=$code" >> $env:GITHUB_OUTPUT
+          "MeinLive Studio $name (Code $code)"
+
+      - name: MeinLive Studio bauen
+        uses: ./.github/actions/build-obs
+        with:
+          target: x64
+          config: RelWithDebInfo
+
+      - name: Installer erstellen
+        id: installer
+        run: |
+          $inno = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $inno)) {
+            choco install innosetup -y --no-progress | Out-Null
+          }
+          $redist = "$env:RUNNER_TEMP\vc_redist.x64.exe"
+          Invoke-WebRequest https://aka.ms/vs/17/release/vc_redist.x64.exe -OutFile $redist
+
+          # Debug-Symbole nicht mit ausliefern (bleiben im Artefakt "symbols")
+          $install = "${{ github.workspace }}\build_x64\install"
+          New-Item -ItemType Directory -Force symbols | Out-Null
+          Get-ChildItem $install -Recurse -Filter *.pdb | Move-Item -Destination symbols -Force
+
+          & $inno /Q "/DAppVersion=${{ steps.version.outputs.name }}" "/DSourceDir=$install" "/DVcRedist=$redist" meinlive\installer\meinlive-studio.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup fehlgeschlagen" }
+
+          $setup = Get-Item "meinlive\installer\Output\MeinLive-Studio-${{ steps.version.outputs.name }}-Setup.exe"
+          $hash = (Get-FileHash $setup.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($setup.Name)" | Set-Content -Encoding ascii "$($setup.FullName).sha256"
+          "path=$($setup.FullName)" >> $env:GITHUB_OUTPUT
+          "file=$($setup.Name)" >> $env:GITHUB_OUTPUT
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+          "size=$($setup.Length)" >> $env:GITHUB_OUTPUT
+          "Installer: $($setup.Name) ($([math]::Round($setup.Length / 1MB)) MB, SHA-256 $hash)"
+
+      - name: Installer hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeinLive-Studio-${{ steps.version.outputs.name }}-Setup
+          path: |
+            meinlive/installer/Output/*.exe
+            meinlive/installer/Output/*.sha256
+          retention-days: 30
+
+      - name: Debug-Symbole hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeinLive-Studio-${{ steps.version.outputs.name }}-symbols
+          path: symbols
+          retention-days: 30
+
+      - name: GitHub-Release veröffentlichen
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $notes = "MeinLive Studio ${{ steps.version.outputs.name }}`n`nDownload und Neuerungen: https://meinlive.de/studio`n`nSHA-256: ``${{ steps.installer.outputs.sha256 }}``"
+          gh release create "${{ github.ref_name }}" "${{ steps.installer.outputs.path }}" "${{ steps.installer.outputs.path }}.sha256" `
+            --title "MeinLive Studio ${{ steps.version.outputs.name }}" --notes $notes --latest

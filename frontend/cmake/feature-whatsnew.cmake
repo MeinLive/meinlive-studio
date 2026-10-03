@@ -1,6 +1,7 @@
 include_guard(DIRECTORY)
 
-option(ENABLE_WHATSNEW "Enable WhatsNew dialog" ON)
+# MeinLive Studio: aus, die Neuigkeiten kommen von obsproject.com
+option(ENABLE_WHATSNEW "Enable WhatsNew dialog" OFF)
 
 if(ENABLE_WHATSNEW AND TARGET OBS::browser-panels)
   if(OS_MACOS)

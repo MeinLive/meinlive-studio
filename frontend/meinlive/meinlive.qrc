@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/meinlive">
+    <file>images/meinlive-wordmark.png</file>
+    <file>images/meinlive-studio-256.png</file>
+  </qresource>
+</RCC>

@@ -18,6 +18,8 @@
 ******************************************************************************/
 
 #include "OBSBasic.hpp"
+
+#include <meinlive/MeinLive.hpp>
 #include "ui-config.h"
 
 #include "ColorSelect.hpp"
@@ -454,7 +456,7 @@ OBSBasic::OBSBasic(QWidget *parent) : OBSMainWindow(parent), undo_s(ui), ui(new 
 	installEventFilter(shortcutFilter);
 
 	stringstream name;
-	name << "OBS " << App()->GetVersionString();
+	name << "MeinLive Studio " << MEINLIVE_STUDIO_VERSION << " (OBS " << App()->GetVersionString() << ")";
 	blog(LOG_INFO, "%s", name.str().c_str());
 	blog(LOG_INFO, "---------------------------------");
 
@@ -1363,6 +1365,14 @@ void OBSBasic::OBSInit()
 	ui->actionShowWhatsNew = nullptr;
 #endif
 
+	/* MeinLive Studio: Log-Uploads und Reparatur laufen über obsproject.com -> ausblenden */
+	for (QAction *action : {ui->actionUploadCurrentLog, ui->actionUploadLastLog, ui->actionUploadLastCrashLog,
+				ui->actionRepair}) {
+		if (action) {
+			action->setVisible(false);
+		}
+	}
+
 	if (safe_mode) {
 		ui->actionRestartSafe->setText(QTStr("Basic.MainMenu.Help.RestartNormal"));
 	}
@@ -1408,6 +1418,9 @@ void OBSBasic::OnFirstLoad()
 #endif
 
 	Auth::Load();
+
+	/* MeinLive Studio: Konto, Menü, Docks, Live gehen */
+	MeinLive::Initialize(this);
 
 	bool showLogViewerOnStartup = config_get_bool(App()->GetUserConfig(), "LogViewer", "ShowLogStartup");
 
@@ -2127,12 +2140,7 @@ void OBSBasic::UpdateTitleBar()
 	const char *profile = config_get_string(App()->GetUserConfig(), "Basic", "Profile");
 	const char *sceneCollection = config_get_string(App()->GetUserConfig(), "Basic", "SceneCollection");
 
-	name << "OBS ";
-	if (previewProgramMode) {
-		name << "Studio ";
-	}
-
-	name << App()->GetVersionString(false);
+	name << "MeinLive Studio " << MEINLIVE_STUDIO_VERSION;
 	if (safe_mode) {
 		name << " (" << Str("TitleBar.SafeMode") << ")";
 	}
