@@ -46,9 +46,10 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
 PrivilegesRequired=admin
-Compression=lzma2/ultra64
+Compression=lzma2/max
 SolidCompression=yes
-LZMANumBlockThreads=4
+; Eigener Prozess: mehr Speicher für die Kompression (ultra64 lief auf GitHub in "Out of memory")
+LZMAUseSeparateProcess=yes
 ; Laufendes MeinLive Studio erkennen (RunOnceMutex in frontend/utility/platform-windows.cpp)
 AppMutex=MeinLiveStudioCore
 CloseApplications=yes
