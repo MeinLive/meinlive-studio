@@ -20,9 +20,9 @@
 #include "OBSBasic.hpp"
 
 #include <components/UIValidation.hpp>
+#include <meinlive/MeinLive.hpp>
 #ifdef YOUTUBE_ENABLED
 #include <docks/YouTubeAppDock.hpp>
-#include <meinlive/MeinLive.hpp>
 #include <utility/YoutubeApiWrappers.hpp>
 #endif
 
