@@ -1365,6 +1365,9 @@ void OBSBasic::OBSInit()
 	ui->actionShowWhatsNew = nullptr;
 #endif
 
+	/* MeinLive Studio: "Discord" führt zum MeinLive-Support */
+	ui->actionDiscord->setText(QTStr("MeinLive.Help.Support"));
+
 	/* MeinLive Studio: Log-Uploads und Reparatur laufen über obsproject.com -> ausblenden */
 	for (QAction *action : {ui->actionUploadCurrentLog, ui->actionUploadLastLog, ui->actionUploadLastCrashLog,
 				ui->actionRepair}) {

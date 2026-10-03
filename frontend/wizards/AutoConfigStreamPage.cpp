@@ -146,6 +146,10 @@ bool AutoConfigStreamPage::validatePage()
 	}
 
 	wiz->bandwidthTest = ui->doBandwidthTest->isChecked();
+	/* MeinLive Studio: ohne Stream-Key ist kein Bandbreitentest möglich */
+	if (ui->key->text().isEmpty() && ui->service->currentText() == QStringLiteral("MeinLive")) {
+		wiz->bandwidthTest = false;
+	}
 	wiz->startingBitrate = (int)obs_data_get_int(settings, "bitrate");
 	wiz->idealBitrate = wiz->startingBitrate;
 	wiz->regionUS = ui->regionUS->isChecked();
@@ -697,8 +701,10 @@ void AutoConfigStreamPage::UpdateServerList()
 void AutoConfigStreamPage::UpdateCompleted()
 {
 	const bool custom = IsCustomService();
+	/* MeinLive Studio: bei MeinLive holt das Programm den Stream-Key nach der Anmeldung selbst */
+	const bool meinlive = ui->service->currentText() == QStringLiteral("MeinLive");
 	if (ui->stackedWidget->currentIndex() == (int)Section::Connect ||
-	    (ui->key->text().isEmpty() && !auth && !custom)) {
+	    (ui->key->text().isEmpty() && !auth && !custom && !meinlive)) {
 		ready = false;
 	} else {
 		if (custom) {

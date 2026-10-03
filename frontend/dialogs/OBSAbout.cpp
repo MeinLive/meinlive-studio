@@ -24,7 +24,7 @@ OBSAbout::OBSAbout(QWidget *parent) : QDialog(parent), ui(new Ui::OBSAbout)
 	/* MeinLive Studio: eigene Version, OBS-Grundlage und Quelltext (GPLv2) */
 	QString ver = QStringLiteral(MEINLIVE_STUDIO_VERSION);
 
-	ui->version->setText(ver + bitness + " - " + QTStr("MeinLive.About.BasedOn").arg(obs_get_version_string()));
+	ui->version->setText(ver + bitness + " - " + QTStr("MeinLive.About.BasedOn").arg(QString(obs_get_version_string()).section('-', 0, 0)));
 
 	ui->contribute->setText(QTStr("MeinLive.About.Links"));
 
