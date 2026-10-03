@@ -224,10 +224,10 @@ void FitToCanvas(obs_sceneitem_t *item, uint32_t cx, uint32_t cy, obs_bounds_typ
 
 void AddBackground(obs_scene_t *scene, uint32_t cx, uint32_t cy)
 {
-	/* Eigenes Hintergrundbild (data/meinlive/background-portrait.png bzw. -landscape.png),
+	/* Eigenes Hintergrundbild (data/meinlive/background-portrait.jpg bzw. -landscape.jpg),
 	 * sonst einfarbig wie meinlive.de */
 	std::string imagePath;
-	if (GetDataFilePath(cy > cx ? "meinlive/background-portrait.png" : "meinlive/background-landscape.png",
+	if (GetDataFilePath(cy > cx ? "meinlive/background-portrait.jpg" : "meinlive/background-landscape.jpg",
 			    imagePath)) {
 		OBSSourceAutoRelease existingImage = obs_get_source_by_name("MeinLive - Hintergrundbild");
 		OBSSource image;
