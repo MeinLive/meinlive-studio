@@ -224,6 +224,27 @@ void FitToCanvas(obs_sceneitem_t *item, uint32_t cx, uint32_t cy, obs_bounds_typ
 
 void AddBackground(obs_scene_t *scene, uint32_t cx, uint32_t cy)
 {
+	/* Eigenes Hintergrundbild (data/meinlive/background-portrait.png bzw. -landscape.png),
+	 * sonst einfarbig wie meinlive.de */
+	std::string imagePath;
+	if (GetDataFilePath(cy > cx ? "meinlive/background-portrait.png" : "meinlive/background-landscape.png",
+			    imagePath)) {
+		OBSSourceAutoRelease existingImage = obs_get_source_by_name("MeinLive - Hintergrundbild");
+		OBSSource image;
+		if (existingImage) {
+			image = OBSSource(existingImage.Get());
+		} else {
+			OBSDataAutoRelease settings = obs_data_create();
+			obs_data_set_string(settings, "file", imagePath.c_str());
+			image = CreateInput("image_source", "MeinLive - Hintergrundbild", settings);
+		}
+		if (image) {
+			obs_sceneitem_t *item = obs_scene_add(scene, image);
+			FitToCanvas(item, cx, cy, OBS_BOUNDS_SCALE_OUTER);
+			return;
+		}
+	}
+
 	OBSDataAutoRelease color = obs_data_create();
 	obs_data_set_int(color, "color", 0xFF0E0C0C); /* #0c0c0e (ABGR) wie meinlive.de */
 	obs_data_set_int(color, "width", cx);
