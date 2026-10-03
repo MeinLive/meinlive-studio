@@ -17,6 +17,7 @@
 #include <widgets/OBSBasic.hpp>
 
 #include <QAction>
+#include <QApplication>
 #include <QDesktopServices>
 #include <QMenu>
 #include <QMenuBar>
@@ -100,6 +101,22 @@ void RebuildMenu(OBSBasic *main)
 	QObject::connect(help, &QAction::triggered, main, []() { OpenUrl("/hilfe"); });
 }
 
+/* Anmeldung erst anbieten, wenn kein anderes Fenster (z. B. der Einrichtungs-
+ * assistent beim ersten Start) offen ist */
+void OfferLoginWhenIdle(OBSBasic *main)
+{
+	QTimer::singleShot(800, main, [main]() {
+		if (QApplication::activeModalWidget() || !main->isVisible()) {
+			OfferLoginWhenIdle(main);
+			return;
+		}
+		if (!Account::Get()->IsLoggedIn()) {
+			LoginDialog dialog(main);
+			dialog.exec();
+		}
+	});
+}
+
 void CreateMenu(OBSBasic *main)
 {
 	QMenuBar *bar = main->menuBar();
@@ -149,10 +166,7 @@ void Initialize(OBSBasic *main)
 		if (!config_get_bool(config, "MeinLive", "LoginOffered")) {
 			config_set_bool(config, "MeinLive", "LoginOffered", true);
 			config_save_safe(config, "tmp", nullptr);
-			QTimer::singleShot(800, main, [main]() {
-				LoginDialog dialog(main);
-				dialog.exec();
-			});
+			OfferLoginWhenIdle(main);
 		}
 	}
 }
