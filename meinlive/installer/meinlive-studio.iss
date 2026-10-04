@@ -50,8 +50,10 @@ Compression=lzma2/max
 SolidCompression=yes
 ; Eigener Prozess: mehr Speicher für die Kompression (ultra64 lief auf GitHub in "Out of memory")
 LZMAUseSeparateProcess=yes
-; Laufendes MeinLive Studio erkennen (RunOnceMutex in frontend/utility/platform-windows.cpp)
-AppMutex=MeinLiveStudioCore
+; Laufendes MeinLive Studio erkennt [Code] InitializeSetup selbst (Mutex "MeinLiveStudioCore",
+; RunOnceMutex in frontend/utility/platform-windows.cpp). Bewusst KEIN AppMutex: das prüft sofort
+; beim Start - bei einem Update aus dem Programm heraus beendet sich das alte Programm aber erst
+; ein paar Sekunden später, dann brach Setup ab (1.0.0 -> 1.0.1, 04.10.2026).
 CloseApplications=yes
 RestartApplications=no
 
@@ -66,6 +68,8 @@ de.VirtualCam=Virtuelle Kamera wird eingerichtet ...
 en.VirtualCam=Setting up virtual camera ...
 de.LaunchApp=MeinLive Studio jetzt starten
 en.LaunchApp=Launch MeinLive Studio now
+de.AppRunning=MeinLive Studio läuft noch. Bitte schließe das Programm und klicke dann auf „Wiederholen“.
+en.AppRunning=MeinLive Studio is still running. Please close it and then click "Retry".
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -96,7 +100,36 @@ Filename: "{sys}\regsvr32.exe"; Parameters: "/u /s ""{app}\data\obs-plugins\win-
 Filename: "{syswow64}\regsvr32.exe"; Parameters: "/u /s ""{app}\data\obs-plugins\win-dshow\obs-virtualcam-module32.dll"""; Flags: runhidden; RunOnceId: "VirtualCam32"
 
 [Code]
+const
+  AppMutexName = 'MeinLiveStudioCore';
+
 function IsUpdate: Boolean;
 begin
   Result := WizardSilent and (Pos('/UPDATE', Uppercase(GetCmdTail)) > 0);
+end;
+
+function InitializeSetup: Boolean;
+var
+  i: Integer;
+begin
+  Result := True;
+  if Pos('/UPDATE', Uppercase(GetCmdTail)) > 0 then
+  begin
+    { Update aus MeinLive Studio: bis zu 30 s warten, bis sich das alte Programm beendet hat }
+    for i := 1 to 60 do
+    begin
+      if not CheckForMutexes(AppMutexName) then
+        Exit;
+      Sleep(500);
+    end;
+  end;
+  { Läuft MeinLive Studio (noch), um Schließen bitten }
+  while CheckForMutexes(AppMutexName) do
+  begin
+    if SuppressibleMsgBox(ExpandConstant('{cm:AppRunning}'), mbError, MB_RETRYCANCEL, IDCANCEL) = IDCANCEL then
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
 end;

@@ -25,6 +25,7 @@
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QStringList>
+#include <QTimer>
 #include <QUrl>
 
 #include <util/config-file.h>
@@ -215,9 +216,15 @@ void DownloadAndInstall(const Release &release)
 				return;
 			}
 
-			/* Der Installer startet MeinLive Studio danach von selbst neu */
+			/* Der Installer wartet, bis dieses Programm beendet ist, installiert und startet
+			 * MeinLive Studio danach von selbst neu. Normal beenden (speichert Szenen usw.);
+			 * hängt das Beenden, nach 15 s hart beenden, damit das Update nicht ausbleibt. */
 			blog(LOG_INFO, "[MeinLive] Update auf %s wird installiert", release.name.toUtf8().constData());
-			main->close();
+			QTimer::singleShot(0, main, [main]() { main->close(); });
+			QTimer::singleShot(15000, qApp, []() {
+				blog(LOG_WARNING, "[MeinLive] Beenden für das Update dauert zu lange - erzwinge Ende");
+				QCoreApplication::exit(0);
+			});
 		});
 }
 
