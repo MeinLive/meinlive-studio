@@ -23,6 +23,7 @@ extern QCef *cef;
 extern QCefCookieManager *panel_cookies;
 #endif
 
+#include <obs-frontend-api.h>
 #include <util/config-file.h>
 
 #include <QDockWidget>
@@ -50,6 +51,44 @@ const DockInfo docks[] = {
 	{"meinliveLiveDock", "MeinLive.Dock.Live", "studio-live", "/studio/live", 340, 420, false},
 };
 
+/* Offen/geschlossen merken wir selbst (1.0.5): Qt setzt die nachträglich angelegten
+ * Docks per restoreDockWidget() zwar an die gemerkte Stelle, blendet sie aber nicht
+ * wieder ein - deshalb fehlten Chat und Live-Steuerung nach jedem Neustart. */
+std::string VisibleKey(const DockInfo &info)
+{
+	return std::string(info.objectName) + "Visible";
+}
+
+bool WasVisible(const DockInfo &info)
+{
+	config_t *config = App()->GetAppConfig();
+	config_set_default_bool(config, "MeinLive", VisibleKey(info).c_str(), true);
+	return config_get_bool(config, "MeinLive", VisibleKey(info).c_str());
+}
+
+/* Beim Beenden (Docks existieren da noch): Zustand jedes Docks speichern.
+ * isHidden() statt isVisible() - das Hauptfenster ist beim Schließen schon weg. */
+void SaveDockVisibility(enum obs_frontend_event event, void *data)
+{
+	if (event != OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+		return;
+	}
+	OBSBasic *main = static_cast<OBSBasic *>(data);
+	config_t *config = App()->GetAppConfig();
+	bool changed = false;
+	for (const DockInfo &info : docks) {
+		QDockWidget *dock = main->findChild<QDockWidget *>(info.objectName);
+		if (!dock) {
+			continue; /* noch nicht angelegt (z. B. sehr schnell beendet) -> alten Stand behalten */
+		}
+		config_set_bool(config, "MeinLive", VisibleKey(info).c_str(), !dock->isHidden());
+		changed = true;
+	}
+	if (changed) {
+		config_save_safe(config, "tmp", nullptr);
+	}
+}
+
 void CreateDock(OBSBasic *main, const DockInfo &info, const std::string &url, bool firstTime, bool raise)
 {
 	if (!cef || main->IsDockObjectNameUsed(info.objectName)) {
@@ -71,8 +110,8 @@ void CreateDock(OBSBasic *main, const DockInfo &info, const std::string &url, bo
 	 * BEVOR diese Docks existieren - Qt kann sie nachträglich anwenden.
 	 * (Fehler in 1.0.0: dort blieben die Docks ab dem zweiten Start unsichtbar.) */
 	if (!firstTime && main->restoreDockWidget(dock)) {
+		dock->setVisible(raise || WasVisible(info));
 		if (raise) {
-			dock->setVisible(true);
 			dock->raise();
 		}
 		return;
@@ -86,7 +125,7 @@ void CreateDock(OBSBasic *main, const DockInfo &info, const std::string &url, bo
 		dock->resize(info.width, std::max(info.height, frame.height() - 120));
 		dock->move(frame.right() - info.width - 40, frame.top() + 80);
 	}
-	dock->setVisible(true);
+	dock->setVisible(firstTime || raise || WasVisible(info));
 }
 
 } // namespace
@@ -98,6 +137,12 @@ void ShowDocks(OBSBasic *main, bool raise)
 	}
 
 	OBSBasic::InitBrowserPanelSafeBlock();
+
+	static bool saveRegistered = false;
+	if (!saveRegistered) {
+		saveRegistered = true;
+		obs_frontend_add_event_callback(SaveDockVisibility, main);
+	}
 
 	config_t *config = App()->GetAppConfig();
 	/* Beim allerersten Mal sichtbar, danach merkt sich OBS die Anordnung selbst */
