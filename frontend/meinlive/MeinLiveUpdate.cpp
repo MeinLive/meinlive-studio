@@ -118,7 +118,7 @@ bool LaunchInstaller(const QString &path)
 #ifdef _WIN32
 	/* ShellExecute statt QProcess: der Installer braucht Administratorrechte (UAC) */
 	std::wstring file = QDir::toNativeSeparators(path).toStdWString();
-	HINSTANCE result = ShellExecuteW(nullptr, L"open", file.c_str(), L"/SILENT /SP- /NOCANCEL /UPDATE", nullptr,
+	HINSTANCE result = ShellExecuteW(nullptr, L"open", file.c_str(), L"/SILENT /SP- /NOCANCEL /NORESTART /UPDATE", nullptr,
 					 SW_SHOWNORMAL);
 	return (INT_PTR)result > 32;
 #else

@@ -54,7 +54,9 @@ LZMAUseSeparateProcess=yes
 ; RunOnceMutex in frontend/utility/platform-windows.cpp). Bewusst KEIN AppMutex: das prüft sofort
 ; beim Start - bei einem Update aus dem Programm heraus beendet sich das alte Programm aber erst
 ; ein paar Sekunden später, dann brach Setup ab (1.0.0 -> 1.0.1, 04.10.2026).
-CloseApplications=yes
+; Keine Windows-Neustartverwaltung: das eigene Programm wartet per Mutex (siehe InitializeSetup);
+; die virtuelle Kamera halten fremde Programme (Chrome, Teams ...) offen, siehe [Files]
+CloseApplications=no
 RestartApplications=no
 
 [Languages]
@@ -75,7 +77,9 @@ en.AppRunning=MeinLive Studio is still running. Please close it and then click "
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "obs-virtualcam-module*.dll"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Virtuelle Kamera: wird von Browsern/Videoprogrammen geladen -> ist sie belegt, beim nächsten Neustart ersetzen statt Fehler
+Source: "{#SourceDir}\data\obs-plugins\win-dshow\obs-virtualcam-module*.dll"; DestDir: "{app}\data\obs-plugins\win-dshow"; Flags: ignoreversion restartreplace uninsrestartdelete
 #ifdef VcRedist
 Source: "{#VcRedist}"; DestDir: "{tmp}"; DestName: "vc_redist.x64.exe"; Flags: deleteafterinstall
 #endif
