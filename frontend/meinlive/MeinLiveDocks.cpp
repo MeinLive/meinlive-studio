@@ -50,7 +50,7 @@ const DockInfo docks[] = {
 	{"meinliveLiveDock", "MeinLive.Dock.Live", "studio-live", "/studio/live", 340, 420, false},
 };
 
-void CreateDock(OBSBasic *main, const DockInfo &info, const std::string &url, bool show)
+void CreateDock(OBSBasic *main, const DockInfo &info, const std::string &url, bool firstTime, bool raise)
 {
 	if (!cef || main->IsDockObjectNameUsed(info.objectName)) {
 		return;
@@ -67,15 +67,26 @@ void CreateDock(OBSBasic *main, const DockInfo &info, const std::string &url, bo
 	dock->SetWidget(browser);
 	main->AddDockWidget(dock, Qt::RightDockWidgetArea);
 
-	/* Chat beim ersten Mal als eigenes Fenster rechts neben dem Hauptfenster
-	 * (z. B. für einen zweiten Bildschirm), danach gilt die gemerkte Anordnung */
-	if (show && info.floating) {
+	/* Gemerkte Anordnung vom letzten Mal: OBS stellt sie beim Start wieder her,
+	 * BEVOR diese Docks existieren - Qt kann sie nachträglich anwenden.
+	 * (Fehler in 1.0.0: dort blieben die Docks ab dem zweiten Start unsichtbar.) */
+	if (!firstTime && main->restoreDockWidget(dock)) {
+		if (raise) {
+			dock->setVisible(true);
+			dock->raise();
+		}
+		return;
+	}
+
+	/* Erstes Mal (oder nichts gemerkt): Chat als eigenes Fenster rechts neben dem
+	 * Hauptfenster (z. B. für einen zweiten Bildschirm), Live-Steuerung angedockt */
+	if (info.floating) {
 		dock->setFloating(true);
 		QRect frame = main->frameGeometry();
 		dock->resize(info.width, std::max(info.height, frame.height() - 120));
 		dock->move(frame.right() - info.width - 40, frame.top() + 80);
 	}
-	dock->setVisible(show);
+	dock->setVisible(true);
 }
 
 } // namespace
@@ -90,8 +101,10 @@ void ShowDocks(OBSBasic *main, bool raise)
 
 	config_t *config = App()->GetAppConfig();
 	/* Beim allerersten Mal sichtbar, danach merkt sich OBS die Anordnung selbst */
-	bool firstTime = !config_get_bool(config, "MeinLive", "DocksCreated");
-	config_set_bool(config, "MeinLive", "DocksCreated", true);
+	/* "DocksLayout2": neuer Schlüssel ab 1.0.2, damit die in 1.0.0 versehentlich
+	 * unsichtbar gespeicherten Docks einmalig wieder erscheinen */
+	bool firstTime = !config_get_bool(config, "MeinLive", "DocksLayout2");
+	config_set_bool(config, "MeinLive", "DocksLayout2", true);
 	config_save_safe(config, "tmp", nullptr);
 
 	std::string token = Account::Get()->Token();
@@ -110,14 +123,13 @@ void ShowDocks(OBSBasic *main, bool raise)
 
 		std::string target = info.target;
 		std::string fallback = std::string(BaseUrl) + info.path;
-		bool show = firstTime || raise;
 		RunAsync(
 			main,
 			[token, target]() {
 				return ApiRequest("POST", "/api/v1/me/web-handoff", nlohmann::json{{"target", target}},
 						  token);
 			},
-			[main, info, fallback, show](const HttpResponse &response) {
+			[main, info, fallback, firstTime, raise](const HttpResponse &response) {
 				nlohmann::json json = response.json();
 				std::string url = fallback;
 				if (response.ok() && json.contains("url") && json["url"].is_string()) {
@@ -125,7 +137,7 @@ void ShowDocks(OBSBasic *main, bool raise)
 				} else if (Account::Get()->HandleApiError(response)) {
 					return;
 				}
-				CreateDock(main, info, url, show);
+				CreateDock(main, info, url, firstTime, raise);
 			});
 	}
 }
@@ -152,7 +164,7 @@ void RemoveDocks(OBSBasic *main)
 	if (panel_cookies) {
 		panel_cookies->DeleteCookies("meinlive.de", std::string());
 	}
-	config_set_bool(App()->GetAppConfig(), "MeinLive", "DocksCreated", false);
+	config_set_bool(App()->GetAppConfig(), "MeinLive", "DocksLayout2", false);
 }
 
 #else
