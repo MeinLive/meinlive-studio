@@ -113,16 +113,29 @@ void Snooze(const Release &release)
 	config_save_safe(config, "tmp", nullptr);
 }
 
-bool LaunchInstaller(const QString &path)
+enum class LaunchResult { Started, Cancelled, Failed };
+
+LaunchResult LaunchInstaller(const QString &path)
 {
 #ifdef _WIN32
-	/* ShellExecute statt QProcess: der Installer braucht Administratorrechte (UAC) */
+	/* "runas": die Windows-Abfrage (UAC) kommt, solange MeinLive Studio noch offen ist -
+	 * lehnt man ab, bleibt das Programm offen (bis 1.0.5 fragte erst der Installer selbst,
+	 * nachdem sich das Programm schon geschlossen hatte -> Update lief still ins Leere). */
 	std::wstring file = QDir::toNativeSeparators(path).toStdWString();
-	HINSTANCE result = ShellExecuteW(nullptr, L"open", file.c_str(), L"/SILENT /SP- /NOCANCEL /NORESTART /UPDATE", nullptr,
-					 SW_SHOWNORMAL);
-	return (INT_PTR)result > 32;
+	SHELLEXECUTEINFOW info = {};
+	info.cbSize = sizeof(info);
+	info.fMask = SEE_MASK_NOASYNC;
+	info.hwnd = reinterpret_cast<HWND>(OBSBasic::Get()->winId());
+	info.lpVerb = L"runas";
+	info.lpFile = file.c_str();
+	info.lpParameters = L"/SILENT /SP- /NOCANCEL /NORESTART /UPDATE";
+	info.nShow = SW_SHOWNORMAL;
+	if (ShellExecuteExW(&info)) {
+		return LaunchResult::Started;
+	}
+	return GetLastError() == ERROR_CANCELLED ? LaunchResult::Cancelled : LaunchResult::Failed;
 #else
-	return QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+	return QDesktopServices::openUrl(QUrl::fromLocalFile(path)) ? LaunchResult::Started : LaunchResult::Failed;
 #endif
 }
 
@@ -215,7 +228,14 @@ void DownloadAndInstall(const Release &release)
 				}
 			}
 
-			if (!LaunchInstaller(target)) {
+			LaunchResult launched = LaunchInstaller(target);
+			if (launched == LaunchResult::Cancelled) {
+				blog(LOG_INFO, "[MeinLive] Update: Windows-Abfrage abgelehnt");
+				QMessageBox::information(main, QTStr("MeinLive.Update.Title"),
+							 QTStr("MeinLive.Update.ElevationCancelled"));
+				return;
+			}
+			if (launched == LaunchResult::Failed) {
 				QMessageBox::warning(main, QTStr("MeinLive.Update.Title"),
 						     QTStr("MeinLive.Update.DownloadFailed").arg(DownloadPage));
 				return;
