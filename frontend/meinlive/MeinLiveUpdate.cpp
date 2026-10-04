@@ -177,10 +177,15 @@ void DownloadAndInstall(const Release &release)
 			return std::make_pair(ok, error);
 		},
 		[progress, release, target, cancelled](const std::pair<bool, std::string> &result) {
+			/* Erst merken, ob DU abgebrochen hast, dann schließen: QProgressDialog
+			 * meldet beim Schließen selbst "canceled" - in 1.0.0-1.0.2 wurde die
+			 * fertige Datei deshalb wieder gelöscht und es passierte nichts. */
+			const bool userCancelled = *cancelled;
+			QObject::disconnect(progress, &QProgressDialog::canceled, nullptr, nullptr);
 			progress->close();
 			OBSBasic *main = OBSBasic::Get();
 
-			if (*cancelled) {
+			if (userCancelled) {
 				QFile::remove(target);
 				return;
 			}
