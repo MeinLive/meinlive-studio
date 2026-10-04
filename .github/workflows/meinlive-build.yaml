@@ -103,6 +103,7 @@ jobs:
           path: symbols
           retention-days: 30
 
+      # --repo ist Pflicht: in einem Fork nimmt gh sonst das Original (obsproject/obs-studio)
       - name: GitHub-Release veröffentlichen
         if: startsWith(github.ref, 'refs/tags/v')
         env:
@@ -110,4 +111,4 @@ jobs:
         run: |
           $notes = "MeinLive Studio ${{ steps.version.outputs.name }}`n`nDownload und Neuerungen: https://meinlive.de/studio`n`nSHA-256: ``${{ steps.installer.outputs.sha256 }}``"
           gh release create "${{ github.ref_name }}" "${{ steps.installer.outputs.path }}" "${{ steps.installer.outputs.path }}.sha256" `
-            --title "MeinLive Studio ${{ steps.version.outputs.name }}" --notes $notes --latest
+            --title "MeinLive Studio ${{ steps.version.outputs.name }}" --notes $notes --latest --repo "${{ github.repository }}"
