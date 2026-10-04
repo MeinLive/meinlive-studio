@@ -354,6 +354,22 @@ void ApplyVideoFormat(Format format)
 	obs_frontend_reset_video();
 }
 
+/* Desktop-Audio (Kanal 1) und Mikrofon (Kanal 3) mit dem Windows-Standardgerät, wie OBS
+ * sie beim allerersten Start anlegt - bei später angelegten Szenensammlungen (unsere
+ * Vorlagen) macht OBS das nicht, der Audiomixer blieb dann leer. Belegte Kanäle bleiben. */
+void EnsureDefaultAudio()
+{
+	OBSBasic *main = OBSBasic::Get();
+	OBSSourceAutoRelease desktop = obs_get_output_source(1);
+	if (!desktop) {
+		main->ResetAudioDevice(App()->OutputAudioSource(), "default", Str("Basic.DesktopDevice1"), 1);
+	}
+	OBSSourceAutoRelease mic = obs_get_output_source(3);
+	if (!mic) {
+		main->ResetAudioDevice(App()->InputAudioSource(), "default", Str("Basic.AuxDevice1"), 3);
+	}
+}
+
 void BuildTemplate(QWidget *parent, Format format, const std::vector<Overlay> &overlays)
 {
 	QString collection = UniqueCollectionName(QTStr(format == Format::Portrait ? "MeinLive.Template.PortraitName"
@@ -364,6 +380,7 @@ void BuildTemplate(QWidget *parent, Format format, const std::vector<Overlay> &o
 	}
 
 	ApplyVideoFormat(format);
+	EnsureDefaultAudio();
 
 	obs_video_info ovi;
 	obs_get_video_info(&ovi);
@@ -483,6 +500,32 @@ void SetupSceneTemplate(QWidget *parent)
 	FetchStudioInfo(parent, [parent, format](const nlohmann::json &json) {
 		BuildTemplate(parent, format, ParseOverlays(json));
 	});
+}
+
+void RepairTemplateAudioOnce()
+{
+	/* Vorlagen aus 1.0.0-1.0.5 haben keine Tonquellen: einmalig je Sammlung nachrüsten,
+	 * aber nur, wenn beide Kanäle leer sind (sonst hat der Streamer selbst eingestellt) */
+	char *current = obs_frontend_get_current_scene_collection();
+	std::string name = current ? current : "";
+	bfree(current);
+	if (name.rfind("MeinLive", 0) != 0) {
+		return;
+	}
+	config_t *config = App()->GetAppConfig();
+	std::string key = "AudioChecked_" + name;
+	if (config_get_bool(config, Section, key.c_str())) {
+		return;
+	}
+	config_set_bool(config, Section, key.c_str(), true);
+	config_save_safe(config, "tmp", nullptr);
+
+	OBSSourceAutoRelease desktop = obs_get_output_source(1);
+	OBSSourceAutoRelease mic = obs_get_output_source(3);
+	if (!desktop && !mic) {
+		blog(LOG_INFO, "[MeinLive] Szenensammlung '%s': Desktop-Audio und Mikrofon nachgerüstet", name.c_str());
+		EnsureDefaultAudio();
+	}
 }
 
 void OfferSceneTemplateOnce(QWidget *parent)

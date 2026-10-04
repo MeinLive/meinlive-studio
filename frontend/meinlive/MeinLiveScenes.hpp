@@ -25,4 +25,7 @@ void SetupSceneTemplate(QWidget *parent);
 /* Nach dem ersten Anmelden einmalig die Vorlage anbieten */
 void OfferSceneTemplateOnce(QWidget *parent);
 
+/* Vorlagen-Sammlungen ohne Tonquellen (bis 1.0.5) einmalig um Desktop-Audio + Mikrofon ergänzen */
+void RepairTemplateAudioOnce();
+
 } // namespace MeinLive

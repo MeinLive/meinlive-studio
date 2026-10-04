@@ -137,6 +137,8 @@ void CreateMenu(OBSBasic *main)
 
 void Initialize(OBSBasic *main)
 {
+	RepairTemplateAudioOnce();
+
 	Account *account = Account::Get();
 	account->Load();
 
